@@ -53,6 +53,8 @@ for i= 1:10
 end
 
 % How to do a heatmap/colormap for each digit?
-
+vector_0 = digit_matrix(:,1);
+matrix_0 = reshape(vector_0, 20, 20);
+heatmap(matrix_0);
 % Pull in test data
 %[test_imgs test_labels] = readMNIST('t10k-images-idx3-ubyte/t10k-images.idx3-ubyte', 't10k-labels-idx1-ubyte/t10k-labels.idx1-ubyte', test_digits, 0);
