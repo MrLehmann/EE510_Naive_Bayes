@@ -13,6 +13,7 @@
 % TODO 2: Test with 28x28 images
 % TODO 3: Test with Pixel Groups as Features
 % TODO 4: Test with edge detection (vertical and horizontal)
+% TODO 5: Test with our own handwritten digits
 
 train_digits = 50000;
 test_digits = 10000;
