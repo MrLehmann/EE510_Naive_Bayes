@@ -9,6 +9,10 @@
 % @date 11/5/2022
 % @version 1
 
+% TODO 1: Add Laplace smoothing
+% TODO 2: Test with 28x28 images
+% TODO 3: Add 
+
 train_digits = 50000;
 test_digits = 10000;
 
@@ -56,6 +60,7 @@ end
 [test_imgs, test_labels] = readMNIST('t10k-images-idx3-ubyte/t10k-images.idx3-ubyte', 't10k-labels-idx1-ubyte/t10k-labels.idx1-ubyte', test_digits, 0);
 
 test_labels_size = size(test_labels, 1);
+% How many of each digit in the test images
 test_digit_labels = zeros(1,10);
 
 % Create confusion matrix
@@ -65,7 +70,7 @@ for i = 1:test_labels_size
     % Do same thing for digit_labels vector to get percentages for
     % confusion matrix
     number_value = test_labels(i);
-    test_digit_labels(number_value + 1) = test_digit_labels(number_value + 1) + 1;
+    test_digit_labels(number_value+1) = test_digit_labels(number_value+1)+1;
     test = test_imgs(:,:,i); % Grab test image
     max_prob = zeros(1,10); % vector to hold the probabilities for each number
     % Loop through each digit in the digit matrix
@@ -88,8 +93,9 @@ for i = 1:test_labels_size
     end
     [maxNum, index] = max(max_prob); % argmax P(y=j|x)
     numb = index;
-    % test_labels(i)+1 gives 
-    confusion(numb, test_labels(i)+1) = confusion(numb, test_labels(i)+1) + 1;
+    % test_labels(i)+1 gives proper index value (0-9) becomes (1-10).
+    % Increment value at confusion matrix by 1.
+    confusion(numb, test_labels(i)+1) = confusion(numb, test_labels(i)+1)+1;
 end
 
 confusion = (confusion./test_digit_labels)*100;

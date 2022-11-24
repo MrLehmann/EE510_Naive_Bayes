@@ -9,6 +9,11 @@
 % @date 11/5/2022
 % @version 1
 
+% TODO 1: Test with Laplace Smoothing
+% TODO 2: Test with 28x28 images
+% TODO 3: Test with Pixel Groups as Features
+% TODO 4: Test with edge detection (vertical and horizontal)
+
 train_digits = 50000;
 test_digits = 10000;
 
