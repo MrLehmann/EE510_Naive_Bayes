@@ -22,7 +22,8 @@ test_digits = 10000;
 
 % Pull in training data
 [train_imgs, train_labels] = readMNIST('train-images-idx3-ubyte/train-images.idx3-ubyte', 'train-labels-idx1-ubyte/train-labels.idx1-ubyte', train_digits, 0);
-
+[train_labels, idx] = sort(train_labels);
+train_imgs = train_imgs(:,:,idx);
 % Create instance vector for each digit label
 digit_labels = zeros(1,10);
 

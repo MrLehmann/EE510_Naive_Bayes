@@ -58,28 +58,21 @@ cov_matrix = zeros(size(train_imgs,1)*size(train_imgs,2),size(train_imgs,1)*size
 [train_labels, idx] = sort(train_labels);
 train_imgs = train_imgs(:,:,idx);
 
-for j=1:10
-    total_sum = 0;
-    for i=1:size(digit_labels(j))
-        img = train_imgs(:,:,i); % Grab image
-        vec = img(:); % Get as a vector
-        %((vec - mean_matrix(:,j)))
-        cov_matrix(:,:,j) = cov_matrix(:,:,j) + ((vec - mean_matrix(j))*(vec - mean_matrix(j))');
-    end
-    
-end
-
-% Divide cov sum by number of images
-for i = 1:10
-    cov_matrix(:,:,i)=cov_matrix(:,:,i)/digit_labels(i);
-end
-
 % Regularize cov_matrix and get inverse of cov_matrix
 icov_matrix = zeros(size(train_imgs,1)*size(train_imgs,2),size(train_imgs,1)*size(train_imgs,2),10);
 sigma = 0.1;
-for i = 1:10
-    cov_matrix(:,:,i)=cov_matrix(:,:,i) + sigma * eye(400,400);
-    icov_matrix(:,:,i) = inv(cov_matrix(:,:,i));
+sigma_I = sigma*eye(400,400);
+for j=1:10
+    for i=1:size(digit_labels(j))
+        img = train_imgs(:,:,i); % Grab image
+        vec = img(:); % Get as a vector
+        exp_diff = (vec - mean_matrix(:,j));
+        cov_matrix(:,:,j) = cov_matrix(:,:,j) + exp_diff*(exp_diff');
+    end
+    % Divide cov sum by number of images
+    cov_matrix(:,:,j)=cov_matrix(:,:,j)/digit_labels(j);
+    cov_matrix(:,:,j) = cov_matrix(:,:,j) + sigma_I;
+    icov_matrix(:,:,j) = inv(cov_matrix(:,:,j));
 end
 
 % How to do a heatmap/colormap for each digit?
@@ -109,12 +102,21 @@ for i = 1:test_labels_size
     % Loop through each digit in the digit matrix
     for j = 1:10
         % Set final probability to 1 (or 0 if doing sum of logs)
-        total_prob = 0.5*(img - mean_matrix(j))'*icov_matrix(:,:,j)*(img - mean_matrix);
-        total_prob = total_prob - 0.5*log(det(cov_matrix(:,:,j)));
+        col_vec = img - mean_matrix(:,j);
+        inv_mat_vec = icov_matrix(:,:,j)*col_vec;
+        row_vec = (img - mean_matrix(:,j))';
+        part_gauss_dens = row_vec*inv_mat_vec; % First part of Gaussian Density
+        det_mat = det(cov_matrix(:,:,j)); % Issue here should not need if statement
+        if det_mat == 0
+            det_mat = 1;
+        end
+        log_det_mat = log(det_mat);
+        gauss_dens = 0.5*part_gauss_dens - 0.5*log_det_mat; % Full Gaussian Density
         % Put total prob per digit in max_prob matrix
-        total_prob = log(digit_labels(j))-total_prob;
+        total_prob = log(digit_labels(j))-gauss_dens;
+        max_prob(j) = total_prob;
     end
-    [maxNum, index] = max(total_prob); % argmax P(y=j|x)
+    [maxNum, index] = max(max_prob); % argmax P(y=j|x)
     numb = index;
     % test_labels(i)+1 gives proper index value (0-9) becomes (1-10).
     % Increment value at confusion matrix by 1.
