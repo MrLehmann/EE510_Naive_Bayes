@@ -30,7 +30,7 @@ digit_labels = zeros(1,10);
 labels_size = size(train_labels,1);
 
 % Create matrix for each vector from 0-9 to hold cumulative training data
-digit_matrix = zeros(size(train_imgs,1)*size(train_imgs,2),10);
+mean_matrix = zeros(size(train_imgs,1)*size(train_imgs,2),10);
 
 % Loop through train_labels to calculate how many per digit
 for i = 1:labels_size
@@ -39,26 +39,49 @@ for i = 1:labels_size
     % Setup the digit_matrix
     num = train_labels(i); % Grab number value
     img = train_imgs(:,:,i); % Grab image
-    img(img >= 0.5) = 1; % Set to either 0 or 1
-    img(img < 0.5) = 0;
     vec = img(:); % Get as a vector
     % Sum vector values into single matrix
     for j = 1:size(vec,1)
-        digit_matrix(j,num+1) = digit_matrix(j,num+1) + vec(j);
+        mean_matrix(j,num+1) = mean_matrix(j,num+1) + vec(j);
     end
 end
-% Can show percentage of each label in training set
-% digit_labels/50000 * 100
 
-% Laplace Smoothing?
+% Divide mean sum by number of images
 for i = 1:10
-    digit_matrix(:,i)=(digit_matrix(:,i)+1)/(digit_labels(i)+2);
+    mean_matrix(:,i)=mean_matrix(:,i)/digit_labels(i);
+end
+
+% 3D matrix to hold Covariance matrix for each digit
+cov_matrix = zeros(size(train_imgs,1)*size(train_imgs,2),size(train_imgs,1)*size(train_imgs,2),10);
+
+% Testing sort methods
+[train_labels, idx] = sort(train_labels);
+train_imgs = train_imgs(idx);
+
+for j=1:10
+    total_sum = 0;
+    for i=1:digit_labels(j)
+        img = train_imgs(:,:,i); % Grab image
+        vec = img(:); % Get as a vector
+        cov_matrix(:,:,j) = cov_matrix(:,:,j) + ((vec - mean_matrix(j))*(vec - mean_matrix(j))');
+    end
+end
+
+% Divide cov sum by number of images
+for i = 1:10
+    cov_matrix(:,:,i)=cov_matrix(:,:,i)/digit_labels(i);
+end
+
+% Regularize cov_matrix
+sigma = 0.1;
+for i = 1:10
+    cov_matrix(:,:,i)=cov_matrix(:,:,i) + sigma * eye(400,400);
 end
 
 % How to do a heatmap/colormap for each digit?
-vector_0 = digit_matrix(:,1);
-matrix_0 = reshape(vector_0, 20, 20);
-heatmap(matrix_0);
+%vector_0 = digit_matrix(:,1);
+%matrix_0 = reshape(vector_0, 20, 20);
+%heatmap(matrix_0);
 
 % Pull in test data
 [test_imgs, test_labels] = readMNIST('t10k-images-idx3-ubyte/t10k-images.idx3-ubyte', 't10k-labels-idx1-ubyte/t10k-labels.idx1-ubyte', test_digits, 0);
@@ -77,10 +100,11 @@ for i = 1:test_labels_size
     test_digit_labels(number_value+1) = test_digit_labels(number_value+1)+1;
     test = test_imgs(:,:,i); % Grab test image
     max_prob = zeros(1,10); % vector to hold the probabilities for each number
+  
+    % Image vector of test image
+    img = test(:);
     % Loop through each digit in the digit matrix
     for j = 1:10
-        % Image vector of test image
-        img = test(:);
         % Set final probability to 1 (or 0 if doing sum of logs)
         total_prob = 0;
         % Loop through each pixel
