@@ -14,6 +14,8 @@
 % TODO 3: Test with Pixel Groups as Features
 % TODO 4: Test with edge detection (vertical and horizontal)
 % TODO 5: Test with our own handwritten digits
+clear;
+clc;
 
 train_digits = 50000;
 test_digits = 10000;
@@ -48,15 +50,15 @@ end
 % Can show percentage of each label in training set
 % digit_labels/50000 * 100
 
-% Normalize matrix?
+% Normalize matrix
 for i = 1:10
     digit_matrix(:,i)=digit_matrix(:,i)/digit_labels(i);
 end
 
 % How to do a heatmap/colormap for each digit?
-%vector_0 = digit_matrix(:,9);
-%matrix_0 = reshape(vector_0, 20, 20);
-%heatmap(matrix_0);
+vector_0 = digit_matrix(:,1);
+matrix_0 = reshape(vector_0, 28, 28);
+heatmap(matrix_0);
 
 % Pull in test data
 [test_imgs, test_labels] = readMNIST('t10k-images-idx3-ubyte/t10k-images.idx3-ubyte', 't10k-labels-idx1-ubyte/t10k-labels.idx1-ubyte', test_digits, 0);
