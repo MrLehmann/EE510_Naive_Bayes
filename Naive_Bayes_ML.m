@@ -9,7 +9,7 @@
 % @date 11/5/2022
 % @version 1
 
-% TODO 1: Test with Laplace Smoothing
+% TODO 1: Test with Gaussian Distribution
 % TODO 2: Test with MAP instead of ML
 % TODO 3: Test with Pixel Groups as Features
 % TODO 4: Test with edge detection (vertical and horizontal)
@@ -50,9 +50,9 @@ end
 % Can show percentage of each label in training set
 % digit_labels/50000 * 100
 
-% Normalize matrix
+% Laplace Smoothing?
 for i = 1:10
-    digit_matrix(:,i)=digit_matrix(:,i)/digit_labels(i);
+    digit_matrix(:,i)=(digit_matrix(:,i)+1)/(digit_labels(i)+2);
 end
 
 % How to do a heatmap/colormap for each digit?
