@@ -10,14 +10,14 @@
 % @version 1
 
 % TODO 1: Test with Laplace Smoothing
-% TODO 2: Test with 28x28 images
+% TODO 2: Test with MAP instead of ML
 % TODO 3: Test with Pixel Groups as Features
 % TODO 4: Test with edge detection (vertical and horizontal)
 % TODO 5: Test with our own handwritten digits
 clear;
 clc;
 
-train_digits = 50000;
+train_digits = 60000;
 test_digits = 10000;
 
 % Pull in training data
