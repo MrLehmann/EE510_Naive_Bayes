@@ -5,7 +5,7 @@
 % Maximum Posteriori Probability (MAP) approaches.
 %
 % @author Mike Lehmann
-% @author Alec ???
+% @author Alec Moravec
 % @date 11/5/2022
 % @version 1
 
@@ -16,6 +16,7 @@
 % TODO 5: Test with our own handwritten digits
 clear;
 clc;
+close all;
 
 train_digits = 60000;
 test_digits = 10000;
@@ -34,16 +35,16 @@ mean_matrix = zeros(size(train_imgs,1)*size(train_imgs,2),10);
 
 % Loop through train_labels to calculate how many per digit
 for i = 1:labels_size
-    number_value = train_labels(i); % Grab digit label number
-    digit_labels(number_value+1) = digit_labels(number_value+1) + 1; % Increment instance
+    num = train_labels(i); % Grab digit label number
+    digit_labels(num+1) = digit_labels(num+1) + 1; % Increment instance
     % Setup the digit_matrix
-    num = train_labels(i); % Grab number value
     img = train_imgs(:,:,i); % Grab image
     vec = img(:); % Get as a vector
     % Sum vector values into single matrix
-    for j = 1:size(vec,1)
-        mean_matrix(j,num+1) = mean_matrix(j,num+1) + vec(j);
-    end
+    mean_matrix(:,num+1) = mean_matrix(:,num+1) + vec;
+    %for j = 1:size(vec,1)
+    %    mean_matrix(j,num+1) = mean_matrix(j,num+1) + vec(j);
+    %end
 end
 
 % Divide mean sum by number of images
@@ -54,24 +55,28 @@ end
 % 3D matrix to hold Covariance matrix for each digit
 cov_matrix = zeros(size(train_imgs,1)*size(train_imgs,2),size(train_imgs,1)*size(train_imgs,2),10);
 
-% Testing sort methods
-[train_labels, idx] = sort(train_labels);
-train_imgs = train_imgs(:,:,idx);
+% Loop through train_labels to calculate how many per digit
+for i = 1:labels_size
+    % Setup the digit_matrix
+    num = train_labels(i); % Grab number value
+    img = train_imgs(:,:,i); % Grab image
+    vec = img(:); % Get as a vector
+    exp_diff = (vec - mean_matrix(:, num+1));
+    cov_matrix(:,:,num+1) = cov_matrix(:,:,num+1) + exp_diff*(exp_diff');
+end
 
 % Regularize cov_matrix and get inverse of cov_matrix
 icov_matrix = zeros(size(train_imgs,1)*size(train_imgs,2),size(train_imgs,1)*size(train_imgs,2),10);
-sigma = 0.1;
-sigma_I = sigma*eye(400,400);
+sigma = 0.01;
+sigma_I = sigma*eye(784,784);
+
+% Loop through each digit to normalize, regularize, and invert
 for j=1:10
-    for i=1:size(digit_labels(j))
-        img = train_imgs(:,:,i); % Grab image
-        vec = img(:); % Get as a vector
-        exp_diff = (vec - mean_matrix(:,j));
-        cov_matrix(:,:,j) = cov_matrix(:,:,j) + exp_diff*(exp_diff');
-    end
-    % Divide cov sum by number of images
-    cov_matrix(:,:,j)=cov_matrix(:,:,j)/digit_labels(j);
+    % Divide cov sum by number of images-1 (because mean is not 0)
+    cov_matrix(:,:,j)=cov_matrix(:,:,j)/(digit_labels(j) - 1);
+    % Regularize the matrix
     cov_matrix(:,:,j) = cov_matrix(:,:,j) + sigma_I;
+    % Get the inverse
     icov_matrix(:,:,j) = inv(cov_matrix(:,:,j));
 end
 
@@ -89,38 +94,52 @@ test_digit_labels = zeros(1,10);
 
 % Create confusion matrix
 confusion = zeros(10,10);
+error = 0;
 % Loop through every test image
 for i = 1:test_labels_size
     % Do same thing for digit_labels vector to get percentages for
     % confusion matrix
-    number_value = test_labels(i);
-    test_digit_labels(number_value+1) = test_digit_labels(number_value+1)+1;
+    num = test_labels(i);
+    test_digit_labels(num+1) = test_digit_labels(num+1)+1;
     test = test_imgs(:,:,i); % Grab test image
     max_prob = zeros(1,10); % vector to hold the probabilities for each number
     % Image vector of test image
     img = test(:);
     % Loop through each digit in the digit matrix
     for j = 1:10
-        % Set final probability to 1 (or 0 if doing sum of logs)
         col_vec = img - mean_matrix(:,j);
         inv_mat_vec = icov_matrix(:,:,j)*col_vec;
-        row_vec = (img - mean_matrix(:,j))';
+        row_vec = col_vec';
         part_gauss_dens = row_vec*inv_mat_vec; % First part of Gaussian Density
         det_mat = det(cov_matrix(:,:,j)); % Issue here should not need if statement
         if det_mat == 0
-            det_mat = 1;
+            % Psuedo Det
+            % Loop through cov_matrix diagonal
+            result = 1;
+            %for k = 1:400
+                %if cov_matrix(k,k,j) > 0.5
+            %        result = result * cov_matrix(k,k,j);
+                %end
+            %end
+            det_mat = result;
         end
         log_det_mat = log(det_mat);
         gauss_dens = 0.5*part_gauss_dens - 0.5*log_det_mat; % Full Gaussian Density
         % Put total prob per digit in max_prob matrix
-        total_prob = log(digit_labels(j))-gauss_dens;
+        total_prob = log(digit_labels(j)/60000) - gauss_dens; % MAP
+        %total_prob = - gauss_dens; % MLE
         max_prob(j) = total_prob;
     end
     [maxNum, index] = max(max_prob); % argmax P(y=j|x)
-    numb = index;
+    if index ~= (num + 1)
+        error = error + 1;
+    end
     % test_labels(i)+1 gives proper index value (0-9) becomes (1-10).
     % Increment value at confusion matrix by 1.
-    confusion(numb, test_labels(i)+1) = confusion(numb, test_labels(i)+1)+1;
+    % (row, column)
+    confusion(num+1, index) = confusion(num+1, index)+1;
 end
 
 confusion = (confusion./test_digit_labels)*100;
+confusion
+(error/10000)*100

@@ -22,8 +22,7 @@ test_digits = 10000;
 
 % Pull in training data
 [train_imgs, train_labels] = readMNIST('train-images-idx3-ubyte/train-images.idx3-ubyte', 'train-labels-idx1-ubyte/train-labels.idx1-ubyte', train_digits, 0);
-[train_labels, idx] = sort(train_labels);
-train_imgs = train_imgs(:,:,idx);
+
 % Create instance vector for each digit label
 digit_labels = zeros(1,10);
 
@@ -53,12 +52,12 @@ end
 
 % Laplace Smoothing?
 for i = 1:10
-    digit_matrix(:,i)=(digit_matrix(:,i)+1)/(digit_labels(i)+2);
+    digit_matrix(:,i)=(digit_matrix(:,i)+0.05)/(digit_labels(i)+0.1);
 end
 
 % How to do a heatmap/colormap for each digit?
 vector_0 = digit_matrix(:,1);
-matrix_0 = reshape(vector_0, 20, 20);
+matrix_0 = reshape(vector_0, size(train_imgs,1), size(train_imgs,2));
 heatmap(matrix_0);
 
 % Pull in test data
@@ -70,12 +69,13 @@ test_digit_labels = zeros(1,10);
 
 % Create confusion matrix
 confusion = zeros(10,10);
+error = 0;
 % Loop through every test image
 for i = 1:test_labels_size
     % Do same thing for digit_labels vector to get percentages for
     % confusion matrix
-    number_value = test_labels(i);
-    test_digit_labels(number_value+1) = test_digit_labels(number_value+1)+1;
+    num = test_labels(i);
+    test_digit_labels(num+1) = test_digit_labels(num+1)+1;
     test = test_imgs(:,:,i); % Grab test image
     max_prob = zeros(1,10); % vector to hold the probabilities for each number
     % Loop through each digit in the digit matrix
@@ -95,14 +95,18 @@ for i = 1:test_labels_size
             total_prob = total_prob+pixel*log(Pji)+(1-pixel)*log(1-Pji);
         end
         % Put total prob per digit in max_prob matrix
-        %max_prob(j) = digit_labels(j)*total_prob; 
-        max_prob(j) = log(digit_labels(j))+total_prob;
+        %max_prob(j) = (digit_labels(j)/60000)*total_prob; 
+        %max_prob(j) = log(digit_labels(j)/60000)+total_prob; % MAP
+        max_prob(j) = total_prob; % MLE
     end
     [maxNum, index] = max(max_prob); % argmax P(y=j|x)
-    numb = index;
+    if index ~= (num+1)
+        error = error + 1;
+    end
     % test_labels(i)+1 gives proper index value (0-9) becomes (1-10).
     % Increment value at confusion matrix by 1.
-    confusion(numb, test_labels(i)+1) = confusion(numb, test_labels(i)+1)+1;
+    confusion(num+1, index) = confusion(num+1, index)+1;
 end
+(error/10000)*100
 
 confusion = (confusion./test_digit_labels)*100;
