@@ -23,8 +23,10 @@ data_size = 5000; % Size per digit file
 digit_matrix = zeros(784,10);
 file_label = 'traininglabels';
 fid_label = fopen(file_label,'r');
-filename1 = 'trainingimages';%sprintf('data%d', i-1); % Grab new file name
-fid1=fopen(filename1,'r');
+%filename1 = 'pixel-frame-0.png';%sprintf('data%d', i-1); % Grab new file name
+%fid1=fopen(filename1,'r');
+[img, map, alpha] = imread("pixil-frame-0.png");
+heatmap(alpha);
 
 label = fread(fid_label,'char');
 labels = str2num(char(label));

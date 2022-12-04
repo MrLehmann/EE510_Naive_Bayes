@@ -96,12 +96,65 @@ test_digit_labels = zeros(1,10);
 confusion = zeros(10,10);
 error = 0;
 % Loop through every test image
-for i = 1:test_labels_size
+%for i = 1:test_labels_size
+%    % Do same thing for digit_labels vector to get percentages for
+%    % confusion matrix
+%    num = test_labels(i);
+%    test_digit_labels(num+1) = test_digit_labels(num+1)+1;
+%    test = test_imgs(:,:,i); % Grab test image
+%    max_prob = zeros(1,10); % vector to hold the probabilities for each number
+%    % Image vector of test image
+%    img = test(:);
+%    % Loop through each digit in the digit matrix
+%    for j = 1:10
+%        col_vec = img - mean_matrix(:,j);
+%        inv_mat_vec = icov_matrix(:,:,j)*col_vec;
+%        row_vec = col_vec';
+%        part_gauss_dens = row_vec*inv_mat_vec; % First part of Gaussian Density
+%        det_mat = det(cov_matrix(:,:,j)); % Issue here should not need if statement
+%        if det_mat == 0
+%            % Psuedo Det
+%            % Loop through cov_matrix diagonal
+%            result = 1;
+%            %for k = 1:400
+%                %if cov_matrix(k,k,j) > 0.5
+%            %        result = result * cov_matrix(k,k,j);
+%                %end
+%            %end
+%            det_mat = result;
+%        end
+%        log_det_mat = log(det_mat);
+%        gauss_dens = 0.5*part_gauss_dens - 0.5*log_det_mat; % Full Gaussian Density
+%        % Put total prob per digit in max_prob matrix
+%        total_prob = log(digit_labels(j)/60000) - gauss_dens; % MAP
+%        %total_prob = - gauss_dens; % MLE
+%        max_prob(j) = total_prob;
+%    end
+%    [maxNum, index] = max(max_prob); % argmax P(y=j|x)
+%    if index ~= (num + 1)
+%        error = error + 1;
+%    end
+%    % test_labels(i)+1 gives proper index value (0-9) becomes (1-10).
+%    % Increment value at confusion matrix by 1.
+%    % (row, column)
+%    confusion(num+1, index) = confusion(num+1, index)+1;
+%end
+
+%confusion = (confusion./test_digit_labels)*100;
+%confusion
+%(error/10000)*100
+
+% Loop through every test image
+result = zeros(1,10);
+% Loop through every test image
+for i = 1:10
     % Do same thing for digit_labels vector to get percentages for
     % confusion matrix
-    num = test_labels(i);
-    test_digit_labels(num+1) = test_digit_labels(num+1)+1;
-    test = test_imgs(:,:,i); % Grab test image
+    filename = sprintf('pixil-frame-%d.png', i-1); % Grab new file name
+    [~, ~, test] = imread(filename);
+    test = double(test);
+    test(test < 100) = 0;
+    test = test/255;
     max_prob = zeros(1,10); % vector to hold the probabilities for each number
     % Image vector of test image
     img = test(:);
@@ -113,14 +166,7 @@ for i = 1:test_labels_size
         part_gauss_dens = row_vec*inv_mat_vec; % First part of Gaussian Density
         det_mat = det(cov_matrix(:,:,j)); % Issue here should not need if statement
         if det_mat == 0
-            % Psuedo Det
-            % Loop through cov_matrix diagonal
             result = 1;
-            %for k = 1:400
-                %if cov_matrix(k,k,j) > 0.5
-            %        result = result * cov_matrix(k,k,j);
-                %end
-            %end
             det_mat = result;
         end
         log_det_mat = log(det_mat);
@@ -131,15 +177,7 @@ for i = 1:test_labels_size
         max_prob(j) = total_prob;
     end
     [maxNum, index] = max(max_prob); % argmax P(y=j|x)
-    if index ~= (num + 1)
-        error = error + 1;
-    end
-    % test_labels(i)+1 gives proper index value (0-9) becomes (1-10).
-    % Increment value at confusion matrix by 1.
-    % (row, column)
-    confusion(num+1, index) = confusion(num+1, index)+1;
-end
 
-confusion = (confusion./test_digit_labels)*100;
-confusion
-(error/10000)*100
+    result(i) = index - 1;
+end
+result

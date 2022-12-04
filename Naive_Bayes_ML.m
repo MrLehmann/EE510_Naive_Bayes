@@ -107,6 +107,44 @@ for i = 1:test_labels_size
     % Increment value at confusion matrix by 1.
     confusion(num+1, index) = confusion(num+1, index)+1;
 end
-(error/10000)*100
+(error/10000)*100;
 
 confusion = (confusion./test_digit_labels)*100;
+
+
+% Loop through every test image
+result = zeros(1,10);
+for i = 1:10
+    % Do same thing for digit_labels vector to get percentages for
+    % confusion matrix
+    filename = sprintf('pixil-frame-%d.png', i-1); % Grab new file name
+    [img, map, test] = imread(filename);
+    test = double(test);
+    test(test < 100) = 0;
+    test = test/255;
+    max_prob = zeros(1,10); % vector to hold the probabilities for each number
+    % Loop through each digit in the digit matrix
+    for j = 1:10
+        % Image vector of test image
+        img = test(:);
+        % Set final probability to 1 (or 0 if doing sum of logs)
+        total_prob = 0;
+        % Loop through each pixel
+        for k = 1:size(img,1)
+            % x value (pixels)
+            pixel = img(k);
+            % Value (0 or 1) of each pixel within the digit matrix
+            Pji = digit_matrix(k, j);
+            % Pji(x) = (Pji^x)*((1-Pji)^(1-x))
+            %total_prob = total_prob*((Pji^pixel)*((1-Pji)^(1-pixel)));
+            total_prob = total_prob+pixel*log(Pji)+(1-pixel)*log(1-Pji);
+        end
+        % Put total prob per digit in max_prob matrix
+        %max_prob(j) = (digit_labels(j)/60000)*total_prob; 
+        %max_prob(j) = log(digit_labels(j)/60000)+total_prob; % MAP
+        max_prob(j) = total_prob; % MLE
+    end
+    [maxNum, index] = max(max_prob); % argmax P(y=j|x)
+    result(i) = index - 1;
+end
+result
