@@ -83,3 +83,4 @@ c = xcorr(R); % Autocorrelation of Noise and Signal
 figure(3);
 stem(lags, c);
 xlabel('Lag');
+title('Autocorrelation of Signal + Noise');
