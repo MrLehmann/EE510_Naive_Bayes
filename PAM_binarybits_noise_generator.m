@@ -80,6 +80,7 @@ title('White Noise PDF at SNR=0');
 % signal corrupted by white noise at a particular SNR setting.
 lags = -999:1:999; % X-axis need 1999 elements to match xcorr
 c = xcorr(R); % Autocorrelation of Noise and Signal
+c = c/(max(c));
 figure(3);
 stem(lags, c);
 xlabel('Lag');
