@@ -5,7 +5,7 @@
 % Maximum Posteriori Probability (MAP) approaches.
 %
 % @author Mike Lehmann
-% @author Alec ???
+% @author Alec Moravec
 % @date 11/5/2022
 % @version 1
 
@@ -15,6 +15,7 @@
 % TODO 4: Test with edge detection (vertical and horizontal)
 % TODO 5: Test with our own handwritten digits
 clear;
+close all;
 clc;
 
 train_digits = 60000;
@@ -56,7 +57,7 @@ for i = 1:10
 end
 
 % How to do a heatmap/colormap for each digit?
-vector_0 = digit_matrix(:,1);
+vector_0 = digit_matrix(:,3);
 matrix_0 = reshape(vector_0, size(train_imgs,1), size(train_imgs,2));
 heatmap(matrix_0);
 
@@ -107,7 +108,7 @@ for i = 1:test_labels_size
     % Increment value at confusion matrix by 1.
     confusion(num+1, index) = confusion(num+1, index)+1;
 end
-(error/10000)*100;
+% (error/10000)*100;
 
 confusion = (confusion./test_digit_labels)*100;
 
@@ -147,4 +148,4 @@ for i = 1:10
     [maxNum, index] = max(max_prob); % argmax P(y=j|x)
     result(i) = index - 1;
 end
-result
+result;
