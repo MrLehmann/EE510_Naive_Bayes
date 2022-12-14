@@ -4,11 +4,19 @@ SNR=0; % signal to noise ratio in dB;
 
 N=20; % Number of bits 
 Ns=50; % Number of time samples per bit.
-t=([1:Ns]-0.5)/Ns; % Time axis for square pulse shape.
-p=ones(size(t)); % shape of the square pulse.
-a = 2;
-%t = -a:0.001:a; %define time from -2 to 2
-%p = 1-abs(t/a); %triangle function with max height of 1.
+test_square = 1;
+% Setup either a square pulse or triangle pulse.
+if test_square == 1
+    t=([1:Ns]-0.5)/Ns; % Time axis for square pulse shape.
+    p=ones(size(t)); % shape of the square pulse.
+    % Set decision rule average cutoff
+    cutoff = 25;
+else
+    t = 1:Ns; %define time from 1-50
+    p = 1-abs(t/Ns); %triangle function with max height of 1.
+    % Set decision rule average cutoff
+    cutoff = 5;
+end
 d=fix(rand(1,N)+0.5); % data bits (random).
 
 X(1:Ns:(Ns*(N-1)+1))=d;
@@ -25,7 +33,6 @@ subplot(3,1,2);
 plot(R);
 title('Noisy Data');
 
-%match_pulse = ones(size(t)); % Could have also just used p
 match_pulse = p(end:-1:1); % Just the opposite of the input pulse
 Y = conv(match_pulse,R); % Convolve the filter with the signal
 subplot(3,1,3);
@@ -49,7 +56,7 @@ for i=1:50:size(Y,2)
         % First pass?
         if i == 1
             % Need to calculate the Average of the first 50 elements
-            if mean(Y,[1,50]) > 25
+            if mean(Y,[1,50]) > cutoff
                 received_bits(count) = 1;
             else
                 received_bits(count) = 0;
@@ -76,12 +83,21 @@ figure(2);
 h = histogram(noise, 'Normalization', 'probability');
 title('White Noise PDF at SNR=0');
 
-% Autocorrelation Estimate of the Gaussian White Noise and the received
-% signal corrupted by white noise at a particular SNR setting.
+% Autocorrelation Estimate of the Gaussian White Noise 
+% at a particular SNR setting.
 lags = -999:1:999; % X-axis need 1999 elements to match xcorr
-c = xcorr(R); % Autocorrelation of Noise and Signal
+c = xcorr(noise); % Autocorrelation of Noise and Signal
 c = c/(max(c));
 figure(3);
+stem(lags, c);
+xlabel('Lag');
+title('Autocorrelation of Noise');
+
+% Autocorrelation Estimate of the Gaussian White Noise and the received
+% signal corrupted by white noise at a particular SNR setting.
+c = xcorr(R); % Autocorrelation of Noise and Signal
+c = c/(max(c));
+figure(4);
 stem(lags, c);
 xlabel('Lag');
 title('Autocorrelation of Signal + Noise');
