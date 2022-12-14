@@ -5,15 +5,10 @@
 % Maximum Posteriori Probability (MAP) approaches.
 %
 % @author Mike Lehmann
-% @author Alec ???
+% @author Alec Moravec
 % @date 11/5/2022
 % @version 1
 
-% TODO 1: Test with Gaussian Distribution
-% TODO 2: Test with MAP instead of ML
-% TODO 3: Test with Pixel Groups as Features
-% TODO 4: Test with edge detection (vertical and horizontal)
-% TODO 5: Test with our own handwritten digits
 clear;
 clc;
 
