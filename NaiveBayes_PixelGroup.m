@@ -10,16 +10,18 @@
 % @version 1
 
 % Pixel Groups as Features
-% Approach: starting with 20x20
+% Approach: 
 % 1.Load in training labels and images. 
-% 2.
+% 2.Transform each training image into matrix of features
+% 3.Count the number of each feature at each location 
+% 4.
 
 clear;
 close all;
 clc;
 
-train_digits = 60000;
-test_digits = 10000;
+train_digits = uint16(60000);
+test_digits = uint16(10000);
 
 % Pull in training data
 [train_imgs, train_labels] = readMNIST('train-images-idx3-ubyte/train-images.idx3-ubyte', 'train-labels-idx1-ubyte/train-labels.idx1-ubyte', train_digits, 0);
@@ -28,32 +30,46 @@ test_digits = 10000;
 digit_labels = zeros(1,10);
 
 % Get train_labels size for loops
-labels_size = size(train_labels,1);
+labels_size = uint16(size(train_labels,1));
 
 % Create matrix for each vector from 0-9 to hold cumulative training data
 digit_matrix = zeros(size(train_imgs,1)*size(train_imgs,2),10);
 
-%fore/background the image
-
 %make picture a matrix of Gij
 %2x2 overlapping
-trainG = zeros(size(train_imgs,1)-1,size(train_imgs,2)-1, labels_size, 4); %all images with vectors as pixels
-imgG = zeros(size(train_imgs,1)-1,size(train_imgs,2)-1, labels_size); %all images with group sum as each pixel
+
+%Initialze matrix. 4-D matrix.
+%First two parameters are i,j coordinates of pixel group feature
+%Third parameter is the index of the training data (nth image)
+%Fourth parameter is the index of the pixel group feature
+%trainG = zeros(size(train_imgs,1)-1,size(train_imgs,2)-1, labels_size, 4); 
+
+%Initialize 3-D matrix. Each layer is a 2D matrix. Each entry in that
+%matrix is the pixel group ID for that region of the image. This is done
+%for each image in the training data
+imgG = zeros(size(train_imgs,1)-1,size(train_imgs,2)-1, labels_size); 
+
+%Number of individual features in the transformed image
 lenG = (size(train_imgs,1)-1)*(size(train_imgs,2)-1);
-countG = zeros((size(train_imgs,1)-1), (size(train_imgs,2)-1), 16, 10); %matrix holding count of each group value in the vectors
+
+%Matrix holding count of each group value in the vectors
+countG = zeros((size(train_imgs,1)-1), (size(train_imgs,2)-1), 16, 10); 
 Gij = zeros(4,1);
+sum = 0;
+labelG = 0;
 for i = 1:labels_size
     img = train_imgs(:,:,i); % Grab image
-    img(img >= 0.5) = 1; % Set to either 0 or 1
+    % Set to either 0 or 1. %fore/background the image
+    img(img >= 0.5) = 1; 
     img(img < 0.5) = 0;
-    vec = img(:); % Get as a vector
+    %vec = img(:); % Get as a vector
     labelG = train_labels(i);
     for j = 1:size(train_imgs,1)-1
         for k= 1:size(train_imgs,2)-1
             Gij = [img(j,k), img(j+1,k), img(j,k+1), img(j+1,k+1)];
-            trainG(j,k,i,:) = Gij;
-            imgG(j,k,i) = Gij(1) +Gij(2)*2 +Gij(3)*4 +Gij(4)*8;
-            sum = Gij(1) +Gij(2)*2 +Gij(3)*4 +Gij(4)*8;
+            %trainG(j,k,i,:) = Gij; %make this faster? takes 28 seconds
+            sum = Gij(1) + Gij(2)*2 + Gij(3)*4 + Gij(4)*8;
+            imgG(j,k,i) = sum;
 
             countG(j,k,sum+1,labelG+1) = countG(j,k, sum+1,labelG+1)+ 1;
         end
