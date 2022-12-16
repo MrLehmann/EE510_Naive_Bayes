@@ -14,7 +14,14 @@
 % 1.Load in training labels and images. 
 % 2.Transform each training image into matrix of features
 % 3.Count the number of each feature at each location 
-% 4.
+% 4.Count the number of each digit in the training data
+% 5.For each feature type in each location and each label do that count/the
+% total count for that label in the training data. This is the Likelyhood
+% 6.Laplace smooth - for the count of each feature in each location for
+% each digit add k (could be 1). For the count of training examples from
+% this class add k*V (V is the number of possible values of the feature)
+% 7.Calculate the 
+% 8.Load in Test data
 
 clear;
 close all;
@@ -22,6 +29,7 @@ clc;
 
 train_digits = uint16(60000);
 test_digits = uint16(10000);
+
 
 % Pull in training data
 [train_imgs, train_labels] = readMNIST('train-images-idx3-ubyte/train-images.idx3-ubyte', 'train-labels-idx1-ubyte/train-labels.idx1-ubyte', train_digits, 0);
@@ -52,9 +60,14 @@ imgG = zeros(size(train_imgs,1)-1,size(train_imgs,2)-1, labels_size);
 %Number of individual features in the transformed image
 lenG = (size(train_imgs,1)-1)*(size(train_imgs,2)-1);
 
-%Matrix holding count of each group value in the vectors
-countG = zeros((size(train_imgs,1)-1), (size(train_imgs,2)-1), 16, 10); 
+%Matrix holding count of each group value for each location in the image
+%for each digit
+countG = zeros((size(train_imgs,1)-1), (size(train_imgs,2)-1), 16, 10);
+
+%Vector that represents an individual feature. This will be turned into a
+%number fore simplicity.
 Gij = zeros(4,1);
+
 sum = 0;
 labelG = 0;
 for i = 1:labels_size
@@ -63,25 +76,32 @@ for i = 1:labels_size
     img(img >= 0.5) = 1; 
     img(img < 0.5) = 0;
     %vec = img(:); % Get as a vector
-    labelG = train_labels(i);
+    labelG = train_labels(i); %grab what the label of this training digit is
     for j = 1:size(train_imgs,1)-1
         for k= 1:size(train_imgs,2)-1
             Gij = [img(j,k), img(j+1,k), img(j,k+1), img(j+1,k+1)];
             %trainG(j,k,i,:) = Gij; %make this faster? takes 28 seconds
             sum = Gij(1) + Gij(2)*2 + Gij(3)*4 + Gij(4)*8;
             imgG(j,k,i) = sum;
-
+            
+            %Add to count of the feature at that location for that digit 
             countG(j,k,sum+1,labelG+1) = countG(j,k, sum+1,labelG+1)+ 1;
         end
     end
 end
 
+%show all heatmaps
 heatmap(countG(:,:,1,1));
-% Laplace Smoothing. Adding K to numerator and kV to the denomenator
-for i = 1:10
-    
-end
 
+% Laplace Smoothing. Adding Ls to numerator and Ls*V to the denomenator
+las = uint8(1); %Laplace smoothing constant
+V = uint8(16);% number of states that the featurs can take
+lasV = las*V;
+lsmooth = zeros((size(train_imgs,1)-1), (size(train_imgs,2)-1), 16, 10);
+for i = 1:10
+    lsmooth(:,:,:,i) = (countG(:,:,:,i) + las)/( + lasV)
+end
+heatmap(lsmooth(:,:,1,1));
 
 
 % 
