@@ -77,6 +77,7 @@ for i = 1:labels_size
     img(img < 0.5) = 0;
     %vec = img(:); % Get as a vector
     labelG = train_labels(i); %grab what the label of this training digit is
+    digit_labels(labelG+1) = digit_labels(labelG+1) + 1; %Add to count of the total of this digit in the training data
     for j = 1:size(train_imgs,1)-1
         for k= 1:size(train_imgs,2)-1
             Gij = [img(j,k), img(j+1,k), img(j,k+1), img(j+1,k+1)];
@@ -90,18 +91,22 @@ for i = 1:labels_size
     end
 end
 
-%show all heatmaps
-heatmap(countG(:,:,1,1));
+% %heatmaps
+% heatmap(countG(:,:,1,1));
 
 % Laplace Smoothing. Adding Ls to numerator and Ls*V to the denomenator
-las = uint8(1); %Laplace smoothing constant
-V = uint8(16);% number of states that the featurs can take
+las = 1; %Laplace smoothing constant
+V = 16;% number of states that the featurs can take
 lasV = las*V;
 lsmooth = zeros((size(train_imgs,1)-1), (size(train_imgs,2)-1), 16, 10);
 for i = 1:10
-    lsmooth(:,:,:,i) = (countG(:,:,:,i) + las)/( + lasV)
+    lsmooth(:,:,:,i) = (countG(:,:,:,i) + las)/(digit_labels(i) + lasV);
 end
 heatmap(lsmooth(:,:,1,1));
+
+
+% Pull in test data
+[test_imgs, test_labels] = readMNIST('t10k-images-idx3-ubyte/t10k-images.idx3-ubyte', 't10k-labels-idx1-ubyte/t10k-labels.idx1-ubyte', test_digits, 0);
 
 
 % 
