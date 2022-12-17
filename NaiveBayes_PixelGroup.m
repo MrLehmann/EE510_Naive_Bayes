@@ -64,7 +64,7 @@ countG = zeros((size(train_imgs,1)-1), (size(train_imgs,2)-1), 16, 10);
 %number fore simplicity.
 Gij = zeros(1,4);
 
-sum = 0;
+sumG = 0;
 labelG = 0;
 for i = 1:labels_size
     img = train_imgs(:,:,i); % Grab image
@@ -79,11 +79,11 @@ for i = 1:labels_size
         for k= 1:size(train_imgs,2)-1
             Gij = [img(j,k), img(j+1,k), img(j,k+1), img(j+1,k+1)];
             %trainG(j,k,i,:) = Gij; %make this faster? takes 28 seconds
-            sum = Gij(1) + Gij(2)*2 + Gij(3)*4 + Gij(4)*8;
+            sumG = Gij(1) + Gij(2)*2 + Gij(3)*4 + Gij(4)*8;
             %imgG(j,k,i) = sum;
             
             %Add to count of the feature at that location for that digit 
-            countG(j,k,sum+1,labelG+1) = countG(j,k, sum+1,labelG+1)+ 1;
+            countG(j,k,sumG+1,labelG+1) = countG(j,k, sumG+1,labelG+1)+ 1;
         end
     end
 end
@@ -99,118 +99,84 @@ lsmooth = zeros((size(train_imgs,1)-1), (size(train_imgs,2)-1), 16, 10);
 for i = 1:10
     lsmooth(:,:,:,i) = (countG(:,:,:,i) + las)/(digit_labels(i) + lasV);
 end
-heatmap(lsmooth(:,:,1,1));
-% 
-% 
-% % Pull in test data
-% [test_imgs, test_labels] = readMNIST('t10k-images-idx3-ubyte/t10k-images.idx3-ubyte', 't10k-labels-idx1-ubyte/t10k-labels.idx1-ubyte', test_digits, 0);
-% 
-% %Size of the test label vector
-% test_labels_size = size(test_labels, 1);
-% 
-% % How many of each digit in the test images
-% test_digit_labels = zeros(1,10);
-% 
-% %make picture a matrix of Gij
-% %2x2 overlapping
-% 
-% %Initialize 3-D matrix. Each layer is a 2D matrix. Each entry in that
-% %matrix is the pixel group ID for that region of the image. This is done
-% %for each image in the training data
-% test_imgG = zeros(size(test_imgs,1)-1,size(test_imgs,2)-1, test_labels_size); 
-% 
-% %Matrix holding count of each group value for each location in the image
-% %for each digit
-% test_countG = zeros((size(test_imgs,1)-1), (size(test_imgs,2)-1), 16, 10);
-% 
-% %Vector that represents an individual feature. This will be turned into a
-% %number fore simplicity.
-% Gij = zeros(4,1);
-% 
-% %Vector containing probabilities for each digit
-% Pij = zeros(1,10);
-% sum = 0;
-% test_labelG = 0;
-% 
-% % Create confusion matrix
-% confusion = zeros(10,10);
-% 
-% for i = 1:test_labels_size
-%     img = test_imgs(:,:,i); % Grab image
-%     % Set to either 0 or 1. %fore/background the image
-%     img(img >= 0.5) = 1; 
-%     img(img < 0.5) = 0;
-%     %vec = img(:); % Get as a vector
-%     
-%     %test_labelG = test_labels(i); %grab what the label of this training digit is
-%     test_digit_labels(test_labelG+1) = test_digit_labels(test_labelG+1) + 1; %Add to count of the total of this digit in the training data
-%     for j = 1:size(test_imgs,1)-1 %The groups are overlapping. The last pixel location of each row does not have a pixel group due to the 2X2 size
-% 
-%         for k= 1:size(test_imgs,2)-1
-%             Gij = [img(j,k), img(j+1,k), img(j,k+1), img(j+1,k+1)];
-%             %trainG(j,k,i,:) = Gij; %make this faster? takes 28 seconds
-%             sum = Gij(1) + Gij(2)*2 + Gij(3)*4 + Gij(4)*8;
-%             %imgG(j,k,i) = sum;
-% 
-%             Pij(:) = lsmooth(j,k,sum+1,:);
-% 
-%             %Add to count of the feature at that location for that digit 
-%             %countG(j,k,sum+1,labelG+1) = countG(j,k, sum+1,labelG+1)+ 1;
-%         end
-%     end
-% end
-% 
+%heatmap(lsmooth(:,:,1,1));
 
-% % Pull in test data
-% [test_imgs, test_labels] = readMNIST('t10k-images-idx3-ubyte/t10k-images.idx3-ubyte', 't10k-labels-idx1-ubyte/t10k-labels.idx1-ubyte', test_digits, 0);
-% 
-% test_labels_size = size(test_labels, 1);
-% % How many of each digit in the test images
-% test_digit_labels = zeros(1,10);
-% 
-% % Create confusion matrix
-% confusion = zeros(10,10);
-% error = 0;
-% % 
-% % Loop through every test image
-% for i = 1:test_labels_size
-%     % Do same thing for digit_labels vector to get percentages for
-%     % confusion matrix
-%     num = test_labels(i);
-%     test_digit_labels(num+1) = test_digit_labels(num+1)+1;
-%     test = test_imgs(:,:,i); % Grab test image
-%     max_prob = zeros(1,10); % vector to hold the probabilities for each number
-% 
-% 
-%     % Loop through each digit in the digit matrix
-%     for j = 1:10
-%         % Image vector of test image
-%         img = test(:);
-%         % Set final probability to 1 (or 0 if doing sum of logs)
-%         total_prob = 0;
-%         % Loop through each pixel
-%         for k = 1:size(img,1)
-%             % x value (pixels)
-%             pixel = img(k);
-%             % Value (0 or 1) of each pixel within the digit matrix
-%             Pji = digit_matrix(k, j);
-%             % Pji(x) = (Pji^x)*((1-Pji)^(1-x))
-%             %total_prob = total_prob*((Pji^pixel)*((1-Pji)^(1-pixel)));
-%             total_prob = total_prob+pixel*log(Pji)+(1-pixel)*log(1-Pji);
-%         end
-%         % Put total prob per digit in max_prob matrix
-%         %max_prob(j) = (digit_labels(j)/60000)*total_prob; 
-%         %max_prob(j) = log(digit_labels(j)/60000)+total_prob; % MAP
-%         max_prob(j) = total_prob; % MLE
-%     end
-%     [maxNum, index] = max(max_prob); % argmax P(y=j|x)
-%     if index ~= (num+1)
-%         error = error + 1;
-%     end
-%     % test_labels(i)+1 gives proper index value (0-9) becomes (1-10).
-%     % Increment value at confusion matrix by 1.
-%     confusion(num+1, index) = confusion(num+1, index)+1;
-% end
-% % (error/10000)*100;
-% 
-% confusion = (confusion./test_digit_labels)*100;
+
+% Pull in test data
+[test_imgs, test_labels] = readMNIST('t10k-images-idx3-ubyte/t10k-images.idx3-ubyte', 't10k-labels-idx1-ubyte/t10k-labels.idx1-ubyte', test_digits, 0);
+
+%Size of the test label vector
+test_labels_size = size(test_labels, 1);
+
+% How many of each digit in the test images
+test_digit_labels = zeros(1,10);
+
+%make picture a matrix of Gij
+%2x2 overlapping
+
+%Initialize 3-D matrix. Each layer is a 2D matrix. Each entry in that
+%matrix is the pixel group ID for that region of the image. This is done
+%for each image in the training data
+test_imgG = zeros(size(test_imgs,1)-1,size(test_imgs,2)-1, test_labels_size); 
+
+%Matrix holding count of each group value for each location in the image
+%for each digit
+test_countG = zeros((size(test_imgs,1)-1), (size(test_imgs,2)-1), 16, 10);
+
+%Vector that represents an individual feature. This will be turned into a
+%number fore simplicity.
+Gij = zeros(4,1);
+
+%Vector containing probabilities for each digit
+Pij = zeros(1,10);
+
+logPtotal = zeros(1,10);
+
+
+%vector of priors(odds of getting that class at random)
+Pc = digit_labels/train_digits;
+sumG = 0;
+test_labelG = 0;
+
+% Create confusion matrix
+confusion = zeros(10,10);
+
+for i = 1:test_labels_size
+    img = test_imgs(:,:,i); % Grab image
+    % Set to either 0 or 1. %fore/background the image
+    img(img >= 0.5) = 1; 
+    img(img < 0.5) = 0;
+    %vec = img(:); % Get as a vector
+    test_labelG = test_labels(i);
+    
+    %test_labelG = test_labels(i); %grab what the label of this training digit is
+    test_digit_labels(test_labelG+1) = test_digit_labels(test_labelG+1) + 1; %Add to count of the total of this digit in the training data
+    
+    logPtotal = log(Pc);
+    
+
+    for j = 1:size(test_imgs,1)-1 %The groups are overlapping. The last pixel location of each row does not have a pixel group due to the 2X2 size
+
+        for k= 1:size(test_imgs,2)-1
+            Gij = [img(j,k), img(j+1,k), img(j,k+1), img(j+1,k+1)];
+            %trainG(j,k,i,:) = Gij; %make this faster? takes 28 seconds
+            sumG = Gij(1) + Gij(2)*2 + Gij(3)*4 + Gij(4)*8;
+            %imgG(j,k,i) = sum;
+
+            Pij(:) = lsmooth(j,k,sumG+1,:); %now add this to the count 
+            logPtotal = logPtotal + log(Pij);
+            %Add to count of the feature at that location for that digit 
+            %countG(j,k,sumG+1,labelG+1) = countG(j,k, sumG+1,labelG+1)+ 1;
+        end
+    end
+    guess = find(logPtotal==max(logPtotal));
+    confusion(guess, test_labels(i)+1) = confusion(guess, test_labels(i)+1) +1;
+
+end
+
+for  i = 1:10 
+    confusion(:,i) = 100*confusion(:,i)/test_digit_labels(i);
+end    
+heatmap(confusion);
+
+
